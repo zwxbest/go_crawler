@@ -1,53 +1,17 @@
 package main
 
 import (
-	"net/http"
-	"fmt"
-	"io/ioutil"
-	"golang.org/x/text/transform"
-		"io"
-	"golang.org/x/text/encoding"
-	"bufio"
-			"golang.org/x/net/html/charset"
-	"regexp"
+	"crawler/engine"
+	"crawler/zhenai/parser"
 )
 
 func main()  {
-	resp, err := http.Get("http://www.zhenai.com/zhenghun")
-	if err != nil {
-		panic(err)
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusOK {
-		fmt.Println("Error: status code", resp.StatusCode)
-		return
-	}
-	e := determinEncoding(resp.Body);
-	utf8Reader := transform.NewReader(resp.Body, e.NewDecoder())
-	all, err := ioutil.ReadAll(utf8Reader)
-	if err != nil {
-		panic(err)
-	}
-	printCityList(all)
+	engine.Run(engine.Request{
+		Url:"http://www.zhenai.com/zhenghun",
+		ParserFunc:parser.ParseCityList,
+	})
+
 }
 
 
-func determinEncoding(r io.Reader) encoding.Encoding {
-	bytes, err := bufio.NewReader(r).Peek(1024)
-	if err != nil {
-		panic(err)
-	}
-	e, _, _ := charset.DetermineEncoding(bytes, "")
-	return e
-}
 
-func printCityList(contents []byte)  {
-	exp := `<a href="(http://www.zhenai.com/zhenghun/[0-9a-z]+)"
-			[^>]*>([^<]+)</a>`
-	re := regexp.MustCompile(exp)
-	matchs := re.FindAllSubmatch(contents,-1)
-	for _, m:= range matchs{
-		fmt.Printf("City: %s, URL %s\n",m[2],m[1])
-	}
-	fmt.Printf("Count: %d\n",len(matchs))
-}
