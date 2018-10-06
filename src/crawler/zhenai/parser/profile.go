@@ -26,7 +26,7 @@ var CarRe = regexp.MustCompile(`<td><span class="label">是否购车：</span><s
 
 func ParseProfile(contents []byte,name string) engine.ParseResult {
 	profile := model.Profile{}
-	profile.Name = name;
+	profile.Name = name
 	age, e := strconv.Atoi(extractString(contents, ageRex))
 	if e == nil {
 		profile.Age = age
@@ -55,7 +55,7 @@ func ParseProfile(contents []byte,name string) engine.ParseResult {
 			profile,
 		},
 	}
-	return result;
+	return result
 }
 
 func extractString(contents []byte, re *regexp.Regexp) string  {
