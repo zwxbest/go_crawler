@@ -4,6 +4,8 @@ import (
 	"net/http"
 	"fmt"
 	"io/ioutil"
+	"golang.org/x/text/transform"
+	"golang.org/x/text/encoding/simplifiedchinese"
 )
 
 func main()  {
@@ -16,8 +18,8 @@ func main()  {
 		fmt.Println("Error: status code", resp.StatusCode)
 		return
 	}
-
-	all, err := ioutil.ReadAll(resp.Body)
+	utf8Reader := transform.NewReader(resp.Body, simplifiedchinese.GBK.NewDecoder())
+	all, err := ioutil.ReadAll(utf8Reader)
 	if err != nil {
 		panic(err)
 	}
