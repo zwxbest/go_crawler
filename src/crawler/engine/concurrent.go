@@ -12,9 +12,6 @@ type ConcurrentEngine struct {
 type Scheduler interface {
 	Submit(Request)
 	ConfigureMasterWorkerChan(chan Request)
-}
-
-type ReadyNotifier interface {
 	WorkerReady(chan Request)
 }
 
