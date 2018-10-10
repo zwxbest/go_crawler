@@ -9,7 +9,7 @@ import (
 func main()  {
 	e := engine.ConcurrentEngine{
 		Scheduler : &scheduler.QueuedScheduler{},
-		WorkerCount:10 ,
+		WorkerCount:1 ,
 	}
 	e.Run(engine.Request{
 		Url:"https://news.163.com",

@@ -5,6 +5,7 @@ import (
 	"github.com/tebeka/selenium"
 	"github.com/tebeka/selenium/chrome"
 	"fmt"
+	"os"
 )
 
 type ConcurrentEngine struct {
@@ -19,11 +20,17 @@ type Scheduler interface {
 }
 
 func (e *ConcurrentEngine) Run(seeds ...Request) {
+
+	fd,_:= os.OpenFile("a.txt",os.O_RDWR|os.O_CREATE|os.O_APPEND,0644)
+	defer fd.Close()
+
 	out := make(chan ParseResult)
 	e.Scheduler.Run()
 
+	caps,_  := createChrome()
+
 	for i := 0; i < e.WorkerCount; i++ {
-		createWorker(out,e.Scheduler)
+		createWorker(out,e.Scheduler,caps)
 	}
 
 	for _, r := range seeds {
@@ -33,16 +40,22 @@ func (e *ConcurrentEngine) Run(seeds ...Request) {
 	for {
 		result := <- out
 		for _, item := range result.Items {
+			content := []byte(fmt.Sprintf("%v\n", item))
+			fd.Write(content)
+			
 			log.Printf("Got item : %v", item)
 		}
+		fd.Close()
 		for _, request := range result.Requests {
 			e.Scheduler.Submit(request)
 		}
 	}
 }
 
-func createWorker(out chan ParseResult, s Scheduler) {
- 	webDriver,_ := createWebDriver()
+func createWorker(out chan ParseResult, s Scheduler,caps selenium.Capabilities) {
+
+	webDriver,_ := createSession(caps)
+
 	in := make(chan Request)
 	go func() {
 		for {
@@ -57,8 +70,7 @@ func createWorker(out chan ParseResult, s Scheduler) {
 	}()
 }
 
-func createWebDriver() (selenium.WebDriver,error) {
-
+func createChrome() (selenium.Capabilities,error) {
 	opts := []selenium.ServiceOption{}
 	caps := selenium.Capabilities{
 		"browserName": "chrome",
@@ -79,12 +91,16 @@ func createWebDriver() (selenium.WebDriver,error) {
 		},
 	}
 	caps.AddChrome(chromeCaps)
-	// 启动chromedriver，端口号可自定义
+	//启动chromedriver，端口号可自定义
 	_, err := selenium.NewChromeDriverService("/opt/google/chronium/chromedriver", 9515, opts...)
 	if err != nil {
 		log.Printf("Error starting the ChromeDriver server: %v", err)
 	}
-	// 调起chrome浏览器
+	return caps,nil
+}
+
+
+func createSession(caps selenium.Capabilities) (selenium.WebDriver,error)  {
 	webDriver, err := selenium.NewRemote(caps, fmt.Sprintf("http://localhost:%d/wd/hub", 9515))
 	if err != nil {
 		return nil,err

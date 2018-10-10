@@ -3,32 +3,29 @@ package parser
 import (
 	"github.com/tebeka/selenium"
 	"crawler/engine"
-	"log"
 	"strconv"
-	"strings"
+	"crawler/model"
 )
 /**
 解析评论
  */
-func ParseComment(bodyEle selenium.WebElement) engine.ParseResult {
-
-
-
+func ParseComment(bodyEle selenium.WebElement,url string) engine.ParseResult {
 	newComment,_ := bodyEle.FindElement(selenium.ByClassName,"tie-new");
 	if newComment != nil {
-		return  parserTieNew(newComment)
+		return  parserTieNew(newComment,url)
 	}
 	newComment,_ = bodyEle.FindElement(selenium.ByID,"mainReplies")
 	if newComment !=nil {
 
 	}
+	return engine.ParseResult{}
 
 }
 
-func parserTieNew(tieNew selenium.WebElement) engine.ParseResult {
+func parserTieNew(tieNew selenium.WebElement,url string) engine.ParseResult {
 
 	result := engine.ParseResult{}
-
+	build := model.Building{}
 
 	hideElements,_ := tieNew.FindElements(selenium.ByClassName,"expand-flr");
 	for _,hideElement := range hideElements {
@@ -40,7 +37,7 @@ func parserTieNew(tieNew selenium.WebElement) engine.ParseResult {
 	for _,noFloorComment := range noFloorComments {
 		commentEle,_:=  noFloorComment.FindElement(selenium.ByClassName,"tie-cnt")
 		comment,_:= commentEle.Text()
-		log.Println(comment)
+		build.FlatComments = append(build.FlatComments, comment)
 	}
 
 	//盖楼的评论,所有的一楼
@@ -82,16 +79,20 @@ func parserTieNew(tieNew selenium.WebElement) engine.ParseResult {
 				}
 			}
 		}
-
-		//todo:，每栋楼一个item
-		var spaceCount = 1;
-		for i := len(allFloor)-1; i >= 0; i-- {
-
-			result.Items = append(result.Items,strconv.Itoa(spaceCount) + strings.Repeat( " ",spaceCount) + allFloor[i])
-			result.Requests = nil
-			spaceCount++
-		}
-
-
+		build.FloorComments = append(build.FloorComments,reverseSlice(allFloor))
 	}
+	build.Url = url
+	result.Items = append(result.Items, build)
+	return result
+}
+
+func reverseSlice(allFloor []string) []string{
+	var reversedFloors []string
+	var spaceCount = 1;
+	for i := len(allFloor)-1; i >= 0; i-- {
+		reversedFloors = append(reversedFloors,strconv.Itoa(spaceCount) +" " + allFloor[i])
+		spaceCount++
+	}
+	return reversedFloors
+
 }
