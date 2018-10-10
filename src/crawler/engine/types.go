@@ -1,8 +1,10 @@
 package engine
 
+import "github.com/tebeka/selenium"
+
 type Request struct {
 	Url string
-	ParserFunc func([]byte) ParseResult
+	ParserFunc func(element selenium.WebElement) ParseResult
 }
 
 type ParseResult struct {
@@ -10,4 +12,3 @@ type ParseResult struct {
 	Items    []interface{}
 }
 
-type ParserFunc func(contents []byte, url string) ParseResult

@@ -1,42 +1,25 @@
 package fetcher
 
 import (
-	"net/http"
-	"fmt"
-	"bufio"
-	"golang.org/x/text/transform"
-	"io/ioutil"
-	"io"
-	"golang.org/x/text/encoding"
-	"golang.org/x/net/html/charset"
 	"time"
+	"github.com/tebeka/selenium"
+	"log"
 )
 
 
 var rateLimiter = time.Tick(100 * time.Millisecond)
-func Fetch(url string) ([]byte, error)  {
+func Fetch(url string,webDriver selenium.WebDriver) (selenium.WebElement, error)  {
 	<-rateLimiter//
-	resp, err := http.Get(url)
+	// 导航到目标网站
+	err := webDriver.Get(url)
 	if err != nil {
-		return nil, err
+		return nil,err
 	}
-	defer resp.Body.Close()
+	title,_ := webDriver.Title()
+	log.Println(title)
+	bodyEle,_ := webDriver.FindElement(selenium.ByTagName,"body");
 
-	if resp.StatusCode != http.StatusOK {
-		return nil,
-			fmt.Errorf("wrong status code: %d",resp.StatusCode)
-	}
-	bodyReader :=bufio.NewReader(resp.Body)
-	e :=determinEncoding(resp.Body)
-	utf8Reader := transform.NewReader(bodyReader, e.NewDecoder())
-	return ioutil.ReadAll(utf8Reader)
+	return bodyEle,nil
+
 }
 
-func determinEncoding(r io.Reader) encoding.Encoding {
-	bytes, err := bufio.NewReader(r).Peek(1024)
-	if err != nil {
-		panic(err)
-	}
-	e, _, _ := charset.DetermineEncoding(bytes, "")
-	return e
-}

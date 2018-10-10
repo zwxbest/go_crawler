@@ -2,7 +2,7 @@ package main
 
 import (
 	"crawler/engine"
-	"crawler/zhenai/parser"
+	"crawler/netease/parser"
 	"crawler/scheduler"
 )
 
@@ -12,8 +12,8 @@ func main()  {
 		WorkerCount:10 ,
 	}
 	e.Run(engine.Request{
-		Url:"http://www.zhenai.com/zhenghun",
-		ParserFunc:parser.ParseCityList,
+		Url:"https://news.163.com",
+		ParserFunc:parser.ParseNewsLists,
 	})
 
 }
