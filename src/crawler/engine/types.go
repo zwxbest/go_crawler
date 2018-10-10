@@ -10,4 +10,3 @@ type ParseResult struct {
 	Items    []interface{}
 }
 
-type ParserFunc func(contents []byte, url string) ParseResult
