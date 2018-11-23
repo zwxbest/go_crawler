@@ -5,6 +5,7 @@ import (
 	"crawler/engine"
 	"log"
 	"strings"
+	"crawler/storage"
 )
 
 func ParseNewsLists(bodyEle selenium.WebElement)  engine.ParseResult {
@@ -13,10 +14,25 @@ func ParseNewsLists(bodyEle selenium.WebElement)  engine.ParseResult {
 
 	navItems,_ := bodyEle.FindElements(selenium.ByClassName,"nav_name")
 	moreNav,_ := bodyEle.FindElement(selenium.ByClassName,"more_list")
-	navItems = append(navItems, moreNav)
+	moreNavs,_ := moreNav.FindElements(selenium.ByTagName,"a")
+
+	navItems = append(navItems, moreNavs...)
+
 
 	for _,navItem := range navItems {
-		href,_ := navItem.GetAttribute("href")
+		href,err := navItem.GetAttribute("href")
+		if err != nil {
+			continue
+		}
+		if !strings.Contains(href, "http") {
+			continue
+		}
+		name,_ := navItem.Text()
+		newCategory := storage.NewsCategory{
+			Name:name,
+			Url:href,
+		}
+		storage.Insert(newCategory)
 		result.Requests = append(result.Requests,engine.Request{
 			Url:href,
 			ParserFunc:ParseNewsLists,
@@ -25,14 +41,18 @@ func ParseNewsLists(bodyEle selenium.WebElement)  engine.ParseResult {
 
 	topNewUlEles,_ := bodyEle.FindElements(selenium.ByClassName,"top_news_ul")
 	topNewTitleEle,_ := bodyEle.FindElement(selenium.ByClassName,"top_news_title")
-	topNewUlEles = append(topNewUlEles, topNewTitleEle)
+	if topNewUlEles!=nil {
+		topNewUlEles = append(topNewUlEles, topNewTitleEle)
 
-
+	}
 
 	for _,topNewEle := range topNewUlEles {
-	   parentEle,_ := topNewEle.FindElement(selenium.ByXPATH,"..")
+		if topNewEle == nil {
+			continue
+		}
+	    parentEle,_ := topNewEle.FindElement(selenium.ByXPATH,"..")
 		className,_ := parentEle.GetAttribute("class")
-	   if strings.Contains(className," none") {
+		if strings.Contains(className," none") {
 	   	continue
 		}
 		hrefEles,_ := topNewEle.FindElements(selenium.ByTagName,"a")

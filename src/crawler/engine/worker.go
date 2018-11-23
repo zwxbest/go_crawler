@@ -6,6 +6,9 @@ import (
 	"github.com/tebeka/selenium"
 )
 
+
+var Driver selenium.WebDriver;
+
 func Worker(r Request,driver selenium.WebDriver) (ParseResult,error) {
 	log.Printf("Fetching %s\n", r.Url)
 	body, e := fetcher.Fetch(r.Url,driver)
@@ -15,5 +18,6 @@ func Worker(r Request,driver selenium.WebDriver) (ParseResult,error) {
 		return ParseResult{},e
 	}
 
+	Driver = driver
 	return r.ParserFunc(body), nil
 }

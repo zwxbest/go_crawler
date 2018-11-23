@@ -5,7 +5,8 @@ import (
 	"github.com/tebeka/selenium"
 	"github.com/tebeka/selenium/chrome"
 	"fmt"
-	"os"
+	"crawler/model"
+	"io/ioutil"
 )
 
 type ConcurrentEngine struct {
@@ -21,9 +22,6 @@ type Scheduler interface {
 
 func (e *ConcurrentEngine) Run(seeds ...Request) {
 
-	fd,_:= os.OpenFile("a.txt",os.O_RDWR|os.O_CREATE|os.O_APPEND,0644)
-	defer fd.Close()
-
 	out := make(chan ParseResult)
 	e.Scheduler.Run()
 
@@ -38,19 +36,46 @@ func (e *ConcurrentEngine) Run(seeds ...Request) {
 	}
 
 	for {
+		//拿出最新的接着执行
 		result := <- out
 		for _, item := range result.Items {
-			content := []byte(fmt.Sprintf("%v\n", item))
-			fd.Write(content)
-			
-			log.Printf("Got item : %v", item)
+
+			//content := []byte(fmt.Sprintf("%v\n", item))
+			//log.Println(content);
+			//building := model.Building(item);
+
+			content :=""
+
+			items,ok := item.([]model.Building)
+			if ok == true {
+				for _,building :=  range items{
+					for _,flatComment  := range building.FlatComments{
+						//println(flatComment)
+						content += flatComment+"\n"
+					}
+					for _,floorComent := range building.FloorComments{
+						for _,floor := range floorComent{
+							//println(floor)
+							content += floor+"\n"
+						}
+					}
+				}
+				err := ioutil.WriteFile("aaaaa.txt", []byte(content), 0644)
+				if err != nil{
+					panic(err)
+				}
+
+			}else {
+				log.Printf("Got item : %v", items)
+			}
+
 		}
-		fd.Close()
 		for _, request := range result.Requests {
 			e.Scheduler.Submit(request)
 		}
 	}
 }
+
 
 func createWorker(out chan ParseResult, s Scheduler,caps selenium.Capabilities) {
 
@@ -65,6 +90,7 @@ func createWorker(out chan ParseResult, s Scheduler,caps selenium.Capabilities) 
 			if e != nil {
 				continue
 			}
+			//ParserFunc返回的扔到out里
 			out <- result
 		}
 	}()
