@@ -12,9 +12,17 @@ import (
 /**
 解析评论
  */
+
+
 func ParseComment(bodyEle selenium.WebElement, url string) engine.ParseResult {
 	result := engine.ParseResult{}
 
+	name,err := bodyEle.FindElement(selenium.ByCSSSelector,"#essay-title>h1>a")
+	if err!= nil{
+		println("title can not find");
+	}
+	newsName,_ := name.Text() ;
+	engine.NewsName =  strings.Replace(newsName,"/","&",-1);
 	buildings := parserTieNew(bodyEle, url, []model.Building{})
 	result.Items = append(result.Items, buildings)
 	return result;
@@ -93,10 +101,12 @@ func parserTieNew(bodyEle selenium.WebElement, url string, buildings []model.Bui
 		display, _ := next.CSSProperty("color")
 		if !strings.Contains(display, "204") {
 			next.Click()
-			time.Sleep(1)
+			time.Sleep(2*time.Second)
 			//engine.Driver.Refresh()
 			nextBody, _ := engine.Driver.FindElement(selenium.ByTagName, "body");
 			buildings = parserTieNew(nextBody, url, buildings)
+		}else {
+			println("end!")
 		}
 	}
 	return buildings

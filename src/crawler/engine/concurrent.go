@@ -20,6 +20,8 @@ type Scheduler interface {
 	Run()
 }
 
+var NewsName = "";
+
 func (e *ConcurrentEngine) Run(seeds ...Request) {
 
 	out := make(chan ParseResult)
@@ -60,7 +62,7 @@ func (e *ConcurrentEngine) Run(seeds ...Request) {
 						}
 					}
 				}
-				err := ioutil.WriteFile("aaaaa.txt", []byte(content), 0644)
+				err := ioutil.WriteFile(NewsName+".txt", []byte(content), 0644)
 				if err != nil{
 					panic(err)
 				}
